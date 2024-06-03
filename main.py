@@ -1,10 +1,9 @@
 import sqlite3
-from typing import Union, List, Dict, Annotated
+from typing import Union, List, Dict
 
 from fastapi import FastAPI, Query, BackgroundTasks, Header, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from starlette.responses import JSONResponse
 
 from config import settings
 from basic_logger import setup_logger
@@ -19,7 +18,7 @@ app = FastAPI()
 async def search(
         request: Request,
         background_tasks: BackgroundTasks,
-        search_query: str = Query(min_length=3, max_length=50, pattern="^[a-zA-Z0-9]+$"),
+        search_query: str = Query(min_length=3, max_length=50, pattern="^[a-zA-Zа-яА-Я0-9()]+$"),
         user_id: str = Header(None),
         user_agent: str = Header(None),
         accept_language: str = Header(None),
