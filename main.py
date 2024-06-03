@@ -19,7 +19,7 @@ app = FastAPI()
 async def search(
         request: Request,
         background_tasks: BackgroundTasks,
-        search_query: str = Annotated[str, Query(max_length=50)],
+        search_query: str = Query(min_length=3, max_length=50, pattern="^[a-zA-Z0-9]+$"),
         user_id: str = Header(None),
         user_agent: str = Header(None),
         accept_language: str = Header(None),
