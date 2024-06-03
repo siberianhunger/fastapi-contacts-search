@@ -45,7 +45,8 @@ def init_sqlite_storage_if_not_exists():
     user_agent TEXT,
     accept_language TEXT,
     user_ip TEXT,
-    query_body TEXT
+    query_body TEXT,
+    query_result TEXT
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     );
     """)
