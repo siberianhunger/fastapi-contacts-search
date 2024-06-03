@@ -1,0 +1,8 @@
+services:
+    contacts_app:
+        container_name: contacts-app
+        image: contacts-app
+        ports:
+          - "8050:8050"
+        volumes:
+          - sqlite_data/contacts.db:/app/contacts.db
