@@ -57,7 +57,7 @@ async def log_query_info(user_id: str, user_agent: str, accept_language: str, us
     connection.commit()
 
 
-async def storage_is_empty():
+def storage_is_empty():
     return bool([i for i in connection.execute(f"SELECT * FROM {settings.query_table_name} limit 1")])
 
 
