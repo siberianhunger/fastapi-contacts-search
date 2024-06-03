@@ -5,4 +5,4 @@ services:
         ports:
           - "8050:8050"
         volumes:
-          - sqlite_data/contacts.db:/app/contacts.db
+          - ./sqlite_data/contacts.db:/app/data/contacts.db
