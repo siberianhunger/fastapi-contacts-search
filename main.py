@@ -45,7 +45,7 @@ async def get_contacts_by_name(name: str) -> list[Contact]:
     contacts_from_query = []  # [{ID: NAME}, ...]
     for row in connection.execute(f"SELECT id, name FROM {settings.query_table_name} WHERE name MATCH ?", (name,)):
         contacts_from_query.append(Contact(id=row[0], name=row[1]))
-    logger.debug(f"query name: {name}\nids_from_query: {contacts_from_query}")
+    logger.info(f"query name: {name}\nids_from_query: {contacts_from_query}")
     return contacts_from_query
 
 
@@ -57,12 +57,14 @@ async def log_query_info(user_id: str, user_agent: str, accept_language: str, us
     connection.commit()
 
 
-def storage_is_empty():
-    return bool([i for i in connection.execute(f"SELECT * FROM {settings.query_table_name} limit 1")])
+def storage_has_records():
+    storage_row = [i for i in connection.execute(f"SELECT * FROM {settings.query_table_name} limit 1")]
+    logger.info(f"storage_has_records query result: {storage_row}\n")
+    return bool(storage_row)
 
 
 @app.on_event("startup")
 async def create_sqlite_tables():
     init_sqlite_storage_if_not_exists()
-    if storage_is_empty():
+    if not storage_has_records():
         process_data_from_file()

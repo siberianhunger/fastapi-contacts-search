@@ -30,7 +30,6 @@ def filter_name(input_string: str) -> str:
 
 
 def insert_parsed_data(data: list[tuple[int, str]]):
-    logger.info(f"{data[:10]}")
     connection.executemany(
         f'INSERT INTO {settings.query_table_name} VALUES (?,?)',
         data
