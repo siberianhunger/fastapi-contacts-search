@@ -5,7 +5,7 @@ import re
 from basic_logger import setup_logger
 from config import settings
 logger = setup_logger()
-connection = sqlite3.connect(':memory:')
+connection = sqlite3.connect(settings.db_name)
 
 
 def read_large_file(file_path):
@@ -30,18 +30,36 @@ def filter_name(input_string: str) -> str:
 
 
 def insert_parsed_data(data: list[tuple[int, str]]):
+    logger.info(f"{data[:10]}")
     connection.executemany(
         f'INSERT INTO {settings.query_table_name} VALUES (?,?)',
         data
     )
+    connection.commit()
 
 
-def process_data_by_filename(filename: str = 'contacts.txt'):
+def init_sqlite_storage_if_not_exists():
+    connection.execute(f'CREATE VIRTUAL TABLE IF NOT EXISTS {settings.query_table_name} USING fts5(id, name);')
+    connection.execute(f"""
+    CREATE TABLE IF NOT EXISTS {settings.query_logs_table_name} (
+    user_id TEXT,
+    user_agent TEXT,
+    accept_language TEXT,
+    user_ip TEXT,
+    query_body TEXT
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    connection.commit()
+
+
+def process_data_from_file():
     buffer = []
     chunk_size = 100
-    for line in read_large_file(filename):
+    for line in read_large_file(settings.source_filename):
         p_line = parse_separate_line(line)
-        buffer.append(p_line)
+        if p_line:
+            buffer.append(p_line)
 
         if len(buffer) >= chunk_size:
             insert_parsed_data(buffer)
@@ -49,3 +67,5 @@ def process_data_by_filename(filename: str = 'contacts.txt'):
 
     if buffer:
         insert_parsed_data(buffer)
+    connection.commit()
+

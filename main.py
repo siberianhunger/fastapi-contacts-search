@@ -1,13 +1,13 @@
 import sqlite3
-from typing import Union, Optional, List
 from fastapi import FastAPI, Query, BackgroundTasks, Header, HTTPException, Request
 from pydantic import BaseModel
 
 from config import settings
 from basic_logger import setup_logger
+from txt_to_db_data_parser import init_sqlite_storage_if_not_exists, process_data_from_file
 
 logger = setup_logger()
-connection = sqlite3.connect(':memory:')
+connection = sqlite3.connect(settings.db_name)
 app = FastAPI()
 
 
@@ -21,7 +21,7 @@ async def search(
         request: Request,
         background_tasks: BackgroundTasks,
         search_query: str = Query(..., description="The search query string"),
-        user_id: str = Header,
+        user_id: str = Header(None),
         user_agent: str = Header(None),
         accept_language: str = Header(None),
 
@@ -43,9 +43,8 @@ async def search(
 
 async def get_contacts_by_name(name: str) -> list[Contact]:
     contacts_from_query = []  # [{ID: NAME}, ...]
-    for row in connection.execute("SELECT id as u_id, name as u_name FROM contacts WHERE name MATCH ?", (name,)):
-        print(row)
-        contacts_from_query.append(Contact(id=row['u_id'], name=row['u_name']))
+    for row in connection.execute(f"SELECT id, name FROM {settings.query_table_name} WHERE name MATCH ?", (name,)):
+        contacts_from_query.append(Contact(id=row[0], name=row[1]))
     logger.debug(f"query name: {name}\nids_from_query: {contacts_from_query}")
     return contacts_from_query
 
@@ -55,18 +54,15 @@ async def log_query_info(user_id: str, user_agent: str, accept_language: str, us
         f'INSERT INTO {settings.query_logs_table_name} VALUES (?, ?, ?, ?, ?)',
         (user_id, user_agent, accept_language, user_ip, query_body)
     )
+    connection.commit()
+
+
+async def storage_is_empty():
+    return bool([i for i in connection.execute(f"SELECT * FROM {settings.query_table_name} limit 1")])
 
 
 @app.on_event("startup")
 async def create_sqlite_tables():
-    connection.execute(f'CREATE VIRTUAL TABLE IF NOT EXISTS {settings.query_table_name} USING fts5(id, name);')
-    connection.execute(f"""
-    CREATE TABLE IF NOT EXISTS {settings.query_logs_table_name} (
-    user_id TEXT,
-    user_agent TEXT,
-    accept_language TEXT,
-    user_ip TEXT,
-    query_body TEXT
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-    """)
+    init_sqlite_storage_if_not_exists()
+    if storage_is_empty():
+        process_data_from_file()

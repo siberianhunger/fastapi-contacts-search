@@ -3,7 +3,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    db_name: str = 'contacts'
+    source_filename: str = 'contacts.txt'
+    db_name: str = 'contacts.db'
     query_table_name: str = 'contacts'
     query_logs_table_name: str = 'query_logs'
 
