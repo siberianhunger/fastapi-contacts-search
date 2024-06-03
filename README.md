@@ -23,4 +23,12 @@ INFO:     Uvicorn running on http://0.0.0.0:8050 (Press CTRL+C to quit)
 
 
 ### compose run:
+1. build image:
+```shell
+docker build -t contacts-app .
+```
 
+2. run app:
+ ```shell
+docker compose up -d contacts_app
+```
